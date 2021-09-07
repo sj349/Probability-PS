@@ -1,0 +1,221 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+Loading in necessary libraries
+```{r}
+library(tibble)
+library(tidyverse)
+```
+
+Creating the deck
+```{r}
+deck <- tibble(
+  # tibble is a more flexible data.frame
+  card = rep(
+    c("ace",
+      "deuce",
+      "three",
+      "four",
+      "five",
+      "six",
+      "seven",
+      "eight",
+      "nine",
+      "ten",
+      "jack",
+      "queen",
+      "king"
+    ),4),
+  suit =
+    rep(c(
+      "diamonds", 
+      "hearts", 
+      "clubs", 
+      "spades"),
+        each = 13),
+  color = rep(c("red", 
+                "black"),
+              each = 26)
+)
+
+glimpse(deck)
+```
+
+## Calculating probability of black or ace card
+
+Following intro example task instructions 
+```{r}
+pr_black <- deck %>% 
+  filter(color == "black") |> 
+  nrow()/nrow(deck)
+
+pr_ace <- deck %>% 
+  filter(card == "ace") %>% 
+  nrow()/nrow(deck)
+
+pr_black_and_ace <- deck %>% 
+  filter(card == "ace" & color == "black") %>% 
+  nrow()/nrow(deck)
+
+pr_black + pr_ace - pr_black_and_ace
+```
+
+## Question 1
+First, calculate probability of getting one red card (since we don't have this variable yet). Then calculate the probability of black and red. Multiply them together to find the probability that both occur.
+```{r}
+pr_red <- deck %>% 
+  filter(color == "red") |> 
+  nrow()/nrow(deck)
+pr_black_and_red <- pr_red * pr_black
+pr_black_and_red
+```
+To calculate the probability of getting one king or one ace in a single draw, we calculate the probability of each individual event and then add them together.
+```{r}
+pr_king <- deck %>% 
+  filter(card == "king") |> 
+  nrow()/nrow(deck)
+
+pr_ace <- deck %>% 
+  filter(card == "ace") |> 
+  nrow()/nrow(deck)
+
+pr_king+pr_ace
+```
+
+To calculate the probability of getting two aces in one draw with replacement, we multiply the probability of getting one ace by itself (because we are finding the probability of that event occurring twice).
+```{r}
+pr_ace *pr_ace 
+```
+
+## Question 2
+To find the number of randomly selected hands of 5 cards each, we can use 52C5 ("52 choose 5") to find the number of possible combinations of 5 card hands pulled from a 52 card deck. This formula is n!/k!(n-k)! 
+
+```{r}
+factorial(52)/(factorial(5)*factorial(47))
+```
+
+## Question 3
+We can choose any suit on the first draw, then we have to choose from 1 of the three remaining suits on the second draw (39 remaining), then we have to choose from 1 of the 2 remaining suits on the third draw (26 cards remaining), and then we only have one suit to choose from on the fourth draw (13 cards remaining). On the last draw, we can choose from any of the four suits (since it doesn't matter which one we repeat); therefore, the number of cards we can select from is the entire remaining deck (48 cards). As we draw each successive card, we subtract one from the denominator because we have removed an additional card from the deck.
+
+```{r}
+(52/52)*(39/51)*(26/50)*(13/49)*(48/48)
+
+```
+## Question 4
+The probability of getting at least one ace in a 5 card hand is equivalent to the probability of not getting zero aces. Therefore, we first calculate the probability of getting zero aces, and then subtract that from 1. The probability of getting zero aces is 48/52 on the first draw (since we cannot select any of the 4 aces from our full deck of 52); on the second draw, it is 47/51 (since we have removed an additional card); on the second draw, it is 46/50 (since we have removed another additional card); on the fourth draw, it is 45/49 (since we have removed another additional card); on the fifth draw, it is 44/48 (since we have removed another additional card). Multiplying these together, we get the probability of no aces, which we then subtract from 1.
+
+```{r}
+1-(48/52)*(47/51)*(46/50)*(45/49)*(44/48)
+```
+
+## Question 5
+
+An analytic solution to this problem would use the combinations formula. Using 6C2 ("6 choose 2") yields all the possible groups of 2 chosen from 6 people; this formula is n!/k!(n-k)! 
+```{r}
+factorial(6)/(factorial(2)*factorial(4))
+```
+## Question 6
+To modify the code to show the pairing combinations when order does matter, we change the "filter" condition such that id1!=id2.
+This allows us to develop all combinations in which the people are not precisely the same. This will allow for both the (id1, id2) pairing and the (id2, id1) pairing.
+```{r}
+df <- tibble(
+  id   = 1:6,
+  name = c('Alice', 'Bob', 'Charlie', 'Diane', 'Fred', 'Jenny')
+)
+
+df_pairs <- df %>% 
+  rename(id1 = id, name1 = name) %>% 
+  crossing(df %>% 
+             select(id2 = id, name2 = name)) %>%
+  filter(id1 != id2) %>%
+  unite(id, id1, id2) %>%
+  unite(name, name1, name2)
+
+df_pairs
+```
+
+
+An analytic solution would use permutations, which considers the order of the pairings. The formula for permutations is n!/(n-k)!
+```{r}
+factorial(6)/factorial(4)
+```
+
+## Question 7
+Building the dice, with 1-6 values on each side
+```{r}
+d1 <- tibble(
+  # tibble is a more flexible data.frame
+  number = 
+    c(1,
+      2,
+      3,
+      4,
+      5,
+      6)
+)
+
+```
+
+
+Taking 1000 samples for each dice, each with different probabilities. The probabilites for any side that is not a 6 on dice 2 are abitrary (all that matters is that 6 occurs 50% of the time). The probabilites for any side that is not a 5 or a 6 on dice 3 are abitrary (all that matters is that 5 and 6 occurs 33% of the time). 
+```{r}
+
+t=sample_n(d1, 1000, prob=rep(c(1/6), each=6), replace= TRUE)
+t2=sample_n(d1, 1000, prob=c(1/12, 1/12, 1/12, 1/12, 1/6, 1/2), replace= TRUE)
+t3=sample_n(d1, 1000, prob=c(0, 0, 1/6, 1/6, 1/3, 1/3), replace= TRUE)
+
+```
+
+Creating new  dataframes to fill with the dice rolls. 
+```{r}
+df1 <- tibble(t)
+df2 <- tibble(t2)
+df3 <- tibble(t3)
+```
+
+
+Calculating averages
+```{r}
+mean1 <- df1 |> summarize(mean=mean(number))
+mean2 <- df2 |> summarize(mean=mean(number))
+mean3 <- df3 |> summarize(mean=mean(number))
+```
+
+
+Dice 1 Plot
+```{r}
+g1 <- ggplot(df1, aes(x=number)) + 
+    geom_bar() +
+    ggtitle("Dice 1 Rolls") +
+    theme(legend.position="none") +
+    xlab("Dice Value") +
+    geom_vline(xintercept=mean1$mean, colour="blue")
+g1
+```
+
+Dice 2 Plot
+```{r}
+g2 <- ggplot(df2, aes(x=number)) + 
+    geom_bar() +
+    ggtitle("Dice 2 Rolls") +
+    theme(legend.position="none") +
+    xlab("Dice Value")+
+    geom_vline(xintercept=mean2$mean, colour="blue")
+g2
+```
+
+Dice 3
+```{r}
+g3 <- ggplot(df3, aes(x=number)) + 
+    geom_bar() +
+    ggtitle("Dice 3 Rolls") +
+    theme(legend.position="none") +
+    xlab("Dice Value")+
+    geom_vline(xintercept=mean3$mean, colour="blue")
+g3
+```
+
