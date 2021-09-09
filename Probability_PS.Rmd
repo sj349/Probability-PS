@@ -92,6 +92,12 @@ pr_ace *pr_ace
 ```
 
 ## Question 2
+To take a random sample of 5 cards from the deck, we can use the sample_n() function. Its two arguments are the collection you're choosing from (the deck) and the number of items you're choosing (in our case, 5).
+```{r}
+hand <- sample_n(deck, 5)
+hand
+```
+
 To find the number of randomly selected hands of 5 cards each, we can use 52C5 ("52 choose 5") to find the number of possible combinations of 5 card hands pulled from a 52 card deck. This formula is n!/k!(n-k)! 
 
 ```{r}
